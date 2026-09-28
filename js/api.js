@@ -1,14 +1,20 @@
 const API = {
+    getUserEmail() {
+        return Storage.getUserEmail() || localStorage.getItem('finora_anon_id') || 'guest';
+    },
+
     async fetchAllData() {
         const url = Storage.getApiUrl();
         if (!url) return null;
 
+        const email = this.getUserEmail();
+
         try {
             const [txRes, bgRes, glRes, catRes] = await Promise.all([
-                fetch(`${url}?action=getTransactions`),
-                fetch(`${url}?action=getBudgets`),
-                fetch(`${url}?action=getGoals`),
-                fetch(`${url}?action=getCategories`)
+                fetch(`${url}?action=getTransactions&userEmail=${encodeURIComponent(email)}`),
+                fetch(`${url}?action=getBudgets&userEmail=${encodeURIComponent(email)}`),
+                fetch(`${url}?action=getGoals&userEmail=${encodeURIComponent(email)}`),
+                fetch(`${url}?action=getCategories&userEmail=${encodeURIComponent(email)}`)
             ]);
 
             const transactions = await txRes.json();
@@ -32,9 +38,14 @@ const API = {
         const url = Storage.getApiUrl();
         if (!url) return { status: 'offline' };
 
+        const fullPayload = {
+            ...payload,
+            userEmail: this.getUserEmail()
+        };
+
         try {
             const formData = new URLSearchParams();
-            formData.append('data', JSON.stringify(payload));
+            formData.append('data', JSON.stringify(fullPayload));
 
             const res = await fetch(url, {
                 method: 'POST',
@@ -90,6 +101,6 @@ const API = {
     },
 
     async saveMonthlyRecap(recapData) {
-        return await this.postData({ action: 'saveMonthlyRecap', ...recapData });
+        return await this.postData({ action: 'saveMonthlySummary', ...recapData });
     }
 };

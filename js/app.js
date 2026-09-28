@@ -1,4 +1,3 @@
-// Callback handler global untuk Google Sign-In SDK
 function handleGoogleSignIn(response) {
   try {
     const base64Url = response.credential.split(".")[1];
@@ -22,6 +21,7 @@ function handleGoogleSignIn(response) {
     if (window.appInstance) {
       window.appInstance.initClockAndGreeting();
       window.appInstance.updateAuthUI();
+      window.appInstance.init();
     }
 
     UI.showToast(`Berhasil masuk sebagai ${payload.name}!`, "success");
@@ -41,6 +41,9 @@ class App {
       localStorage.getItem("finora_custom_categories") || "[]",
     );
 
+    this.currentTxPage = 1;
+    this.txPerPage = 10;
+
     this.cashFlowChart = null;
     this.categoryChart = null;
     this.statBarChart = null;
@@ -57,6 +60,10 @@ class App {
     this.updateAuthUI();
     this.initEventListeners();
     this.populateCategories();
+
+    // DENGAN KODINGAN INI ANDA DAPAT MENGATUR PEMBERITAHUAN UPDATE/SINKRONISASI
+    // Kosongkan "" jika tidak ada pemberitahuan update yang ingin ditampilkan
+    this.setUpdateNotice("", false);
 
     window.deleteTransaction = (id) => this.deleteTransaction(id);
     window.editTransaction = (id) => this.editTransaction(id);
@@ -118,6 +125,22 @@ class App {
     }
   }
 
+  // FUNGSI UNTUK MENAMPILKAN / SEMBUNYI TEKS PEMBERITAHUAN UPDATE
+  setUpdateNotice(messageText, isWarning = false) {
+    const noticeElem = document.getElementById("update-notice-text");
+    if (!noticeElem) return;
+
+    if (messageText && messageText.trim() !== "") {
+      noticeElem.innerHTML = `<i data-lucide="${isWarning ? 'alert-triangle' : 'check-circle'}" style="width:14px; height:14px; flex-shrink:0;"></i> ${messageText}`;
+      noticeElem.className = `update-notice-paragraph ${isWarning ? 'warning-notice' : ''}`;
+      noticeElem.style.display = "flex";
+      if (window.lucide) window.lucide.createIcons();
+    } else {
+      noticeElem.style.display = "none";
+      noticeElem.innerHTML = "";
+    }
+  }
+
   getDefaultCategories() {
     return [
       "Makanan",
@@ -156,59 +179,6 @@ class App {
     ];
   }
 
-  initAuthModal() {
-    const modal = document.getElementById("google-login-modal");
-    const openBtn = document.getElementById("btn-open-login");
-    const logoutBtn = document.getElementById("btn-logout-google");
-    const closeBtn = document.getElementById("close-login-modal");
-    const cancelBtn = document.getElementById("cancel-login-modal");
-
-    if (openBtn)
-      openBtn.addEventListener("click", () => modal.classList.add("active"));
-
-    // Action Tombol Logout Google
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", () => {
-        if (confirm("Apakah Anda yakin ingin keluar dari akun Google?")) {
-          Storage.clearUserProfile();
-          this.initClockAndGreeting();
-          this.updateAuthUI();
-          UI.showToast("Anda telah keluar dari akun Google.", "info");
-        }
-      });
-    }
-
-    const closeModal = () => modal.classList.remove("active");
-    if (closeBtn) closeBtn.addEventListener("click", closeModal);
-    if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
-  }
-
-  // MENGATUR VISIBILITAS TOMBOL MASUK/KELUAR DI SEMUA PERANGKAT
-  updateAuthUI() {
-    const avatarContainer = document.getElementById("user-avatar-container");
-    const avatarImg = document.getElementById("user-avatar");
-    const openLoginBtn = document.getElementById("btn-open-login");
-    const logoutBtn = document.getElementById("btn-logout-google");
-
-    const avatarUrl = Storage.getUserAvatar();
-    const userEmail = Storage.getUserEmail();
-
-    if (avatarUrl && userEmail) {
-      // JIKA SUDAH LOGIN: Tampilkan Avatar & Tombol Logout, Sembunyikan Tombol Login
-      if (avatarImg) avatarImg.src = avatarUrl;
-      if (avatarContainer) avatarContainer.style.setProperty("display", "block", "important");
-      if (openLoginBtn) openLoginBtn.style.setProperty("display", "none", "important");
-      if (logoutBtn) logoutBtn.style.setProperty("display", "inline-flex", "important");
-    } else {
-      // JIKA BELUM LOGIN: Sembunyikan Avatar & Tombol Logout, Tampilkan Tombol Login
-      if (avatarContainer) avatarContainer.style.setProperty("display", "none", "important");
-      if (openLoginBtn) openLoginBtn.style.setProperty("display", "inline-flex", "important");
-      if (logoutBtn) logoutBtn.style.setProperty("display", "none", "important");
-    }
-
-    if (window.lucide) window.lucide.createIcons();
-  }
-
   initUsernameModal() {
     const modal = document.getElementById("username-modal");
     const openBtn = document.getElementById("btn-edit-username");
@@ -240,6 +210,74 @@ class App {
         }
       });
     }
+  }
+
+  initAuthModal() {
+    const modal = document.getElementById("google-login-modal");
+    const openBtn = document.getElementById("btn-open-login");
+    const openBtnMobile = document.getElementById("mobile-btn-open-login");
+    const logoutBtn = document.getElementById("btn-logout-google");
+    const logoutBtnMobile = document.getElementById("mobile-btn-logout-google");
+    const closeBtn = document.getElementById("close-login-modal");
+    const cancelBtn = document.getElementById("cancel-login-modal");
+
+    const showModal = () => modal.classList.add("active");
+    if (openBtn) openBtn.addEventListener("click", showModal);
+    if (openBtnMobile) openBtnMobile.addEventListener("click", showModal);
+
+    const handleLogout = () => {
+      if (confirm("Apakah Anda yakin ingin keluar dari akun Google?")) {
+        Storage.clearUserProfile();
+        this.initClockAndGreeting();
+        this.updateAuthUI();
+        UI.showToast("Anda telah keluar dari akun Google.", "info");
+      }
+    };
+
+    if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
+    if (logoutBtnMobile) logoutBtnMobile.addEventListener("click", handleLogout);
+
+    const closeModal = () => modal.classList.remove("active");
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+  }
+
+  updateAuthUI() {
+    const avatarContainer = document.getElementById("user-avatar-container");
+    const avatarImg = document.getElementById("user-avatar");
+    const openLoginBtn = document.getElementById("btn-open-login");
+    const logoutBtn = document.getElementById("btn-logout-google");
+
+    const mobileOpenLoginBtn = document.getElementById("mobile-btn-open-login");
+    const mobileLogoutBtn = document.getElementById("mobile-btn-logout-google");
+
+    const avatarUrl = Storage.getUserAvatar();
+    const userEmail = Storage.getUserEmail();
+
+    if (avatarUrl && userEmail) {
+      if (avatarImg) avatarImg.src = avatarUrl;
+      if (avatarContainer) avatarContainer.style.display = "block";
+
+      // Desktop
+      if (openLoginBtn) openLoginBtn.style.setProperty("display", "none", "important");
+      if (logoutBtn) logoutBtn.style.setProperty("display", "inline-flex", "important");
+
+      // Mobile
+      if (mobileOpenLoginBtn) mobileOpenLoginBtn.style.setProperty("display", "none", "important");
+      if (mobileLogoutBtn) mobileLogoutBtn.style.setProperty("display", "inline-flex", "important");
+    } else {
+      if (avatarContainer) avatarContainer.style.display = "none";
+
+      // Desktop
+      if (openLoginBtn) openLoginBtn.style.setProperty("display", "inline-flex", "important");
+      if (logoutBtn) logoutBtn.style.setProperty("display", "none", "important");
+
+      // Mobile
+      if (mobileOpenLoginBtn) mobileOpenLoginBtn.style.setProperty("display", "inline-flex", "important");
+      if (mobileLogoutBtn) mobileLogoutBtn.style.setProperty("display", "none", "important");
+    }
+
+    if (window.lucide) window.lucide.createIcons();
   }
 
   initClockAndGreeting() {
@@ -333,14 +371,11 @@ class App {
     const btnToggleDesktop = document.getElementById("theme-toggle");
     if (btnToggleDesktop)
       btnToggleDesktop.addEventListener("click", toggleTheme);
-
-    const btnToggleMobile = document.getElementById("theme-toggle-mobile");
-    if (btnToggleMobile) btnToggleMobile.addEventListener("click", toggleTheme);
   }
 
   initEventListeners() {
     document
-      .querySelectorAll(".nav-item, .mobile-nav-item, #btn-mobile-settings")
+      .querySelectorAll(".nav-item, .mobile-nav-item, #btn-mobile-settings-top")
       .forEach((btn) => {
         btn.addEventListener("click", (e) => {
           const target = e.currentTarget.getAttribute("data-target");
@@ -348,13 +383,33 @@ class App {
         });
       });
 
+    const btnPrev = document.getElementById("btn-tx-prev");
+    if (btnPrev) {
+      btnPrev.addEventListener("click", () => {
+        if (this.currentTxPage > 1) {
+          this.currentTxPage--;
+          this.filterAndRenderTransactions();
+        }
+      });
+    }
+
+    const btnNext = document.getElementById("btn-tx-next");
+    if (btnNext) {
+      btnNext.addEventListener("click", () => {
+        this.currentTxPage++;
+        this.filterAndRenderTransactions();
+      });
+    }
+
     const txModal = document.getElementById("transaction-modal");
     const openTx = () => {
       document.getElementById("tx-id").value = "";
       document.getElementById("tx-form").reset();
       document.getElementById("tx-custom-category").style.display = "none";
       document.getElementById("modal-title").innerText = "Tambah Transaksi";
-      document.getElementById("tx-date").valueAsDate = new Date();
+      
+      const nowStr = new Date().toISOString().substring(0, 10);
+      document.getElementById("tx-date").value = nowStr;
       txModal.classList.add("active");
     };
 
@@ -448,7 +503,7 @@ class App {
         document.getElementById("gl-id").value = "";
         document.getElementById("goal-form").reset();
         document.getElementById("goal-modal-title").innerText =
-          "Tambah Tujuan Tabungan";
+          "Tambah Target Tabungan";
         glModal.classList.add("active");
       });
     }
@@ -497,9 +552,10 @@ class App {
       (id) => {
         const elem = document.getElementById(id);
         if (elem)
-          elem.addEventListener("input", () =>
-            this.filterAndRenderTransactions(),
-          );
+          elem.addEventListener("input", () => {
+            this.currentTxPage = 1;
+            this.filterAndRenderTransactions();
+          });
       },
     );
 
@@ -576,7 +632,7 @@ class App {
     const select = document.getElementById("svg-target-goal");
     if (!select) return;
     if (this.goals.length === 0) {
-      select.innerHTML = `<option value="">Tabungan Umum (Tidak Ada Tujuan)</option>`;
+      select.innerHTML = `<option value="">Tabungan Umum (Tidak Ada Target)</option>`;
       return;
     }
     select.innerHTML =
@@ -607,7 +663,7 @@ class App {
                 </td>
                 <td><span class="btn-sm btn-outline" style="font-size:10px; padding:2px 6px;">Kategori</span></td>
                 <td class="text-center">
-                    <div class="cat-action-btns">
+                    <div style="display:flex; gap:6px; justify-content:center;">
                         <button class="btn btn-sm btn-outline" onclick="window.editCategory('${catName}')" title="Edit">
                             <i data-lucide="edit-2"></i>
                         </button>
@@ -689,7 +745,10 @@ class App {
     const amount = parseFloat(document.getElementById("tx-amount").value) || 0;
     let category = document.getElementById("tx-category").value;
     const account = document.getElementById("tx-account").value;
-    const date = document.getElementById("tx-date").value;
+    
+    let date = document.getElementById("tx-date").value;
+    if (!date) date = new Date().toISOString().substring(0, 10);
+
     const description = document.getElementById("tx-description").value.trim();
 
     if (category === "ADD_CUSTOM") {
@@ -746,7 +805,7 @@ class App {
     UI.showToast("Menyimpan Transaksi...", "info");
 
     const res = await API.saveTransaction(payload);
-    if (res.status === "success")
+    if (res && res.status === "success")
       UI.showToast("Transaksi berhasil disimpan ke Spreadsheet", "success");
   }
 
@@ -807,7 +866,7 @@ class App {
     document.getElementById("tx-amount").value = item.amount;
     document.getElementById("tx-category").value = item.category;
     document.getElementById("tx-account").value = item.account;
-    document.getElementById("tx-date").value = item.date;
+    document.getElementById("tx-date").value = (item.date || '').split('T')[0].split(' ')[0];
     document.getElementById("tx-description").value = item.description;
 
     const radType = document.querySelector(
@@ -829,7 +888,7 @@ class App {
 
     UI.showToast("Menghapus dari Spreadsheet...", "info");
     const res = await API.deleteTransaction(id);
-    if (res.status === "success") {
+    if (res && res.status === "success") {
       UI.showToast("Transaksi berhasil dihapus dari Spreadsheet", "success");
     }
   }
@@ -857,7 +916,7 @@ class App {
 
     UI.showToast("Menghapus semua transaksi dari Spreadsheet...", "info");
     const res = await API.deleteAllTransactions();
-    if (res.status === "success") {
+    if (res && res.status === "success") {
       UI.showToast(
         "Semua transaksi berhasil dihapus dari Spreadsheet",
         "success",
@@ -942,7 +1001,7 @@ class App {
 
     document.getElementById("gl-id").value = item.id;
     document.getElementById("goal-modal-title").innerText =
-      "Edit Tujuan Tabungan";
+      "Edit Target Tabungan";
     document.getElementById("gl-name").value = item.goal;
     document.getElementById("gl-target").value = item.target;
     document.getElementById("gl-current").value = item.current;
@@ -951,7 +1010,7 @@ class App {
   }
 
   async deleteGoal(id) {
-    if (!confirm("Hapus Tujuan Tabungan ini dari web dan spreadsheet?")) return;
+    if (!confirm("Hapus Target Tabungan ini dari web dan spreadsheet?")) return;
 
     this.goals = this.goals.filter(
       (g) => String(g.id).trim() !== String(id).trim(),
@@ -959,10 +1018,10 @@ class App {
     Storage.saveGoals(this.goals);
     this.renderAll();
 
-    UI.showToast("Menghapus Tujuan dari Spreadsheet...", "info");
+    UI.showToast("Menghapus Target dari Spreadsheet...", "info");
     const res = await API.deleteGoal(id);
     if (res && res.status === "success") {
-      UI.showToast("Tujuan berhasil dihapus dari Spreadsheet", "success");
+      UI.showToast("Target berhasil dihapus dari Spreadsheet", "success");
     }
   }
 
@@ -997,9 +1056,9 @@ class App {
     document.getElementById("goal-form").reset();
 
     this.renderAll();
-    UI.showToast("Menyimpan Tujuan...", "info");
+    UI.showToast("Menyimpan Target...", "info");
     await API.saveGoal(payload);
-    UI.showToast("Tujuan Tabungan berhasil disimpan ke Spreadsheet", "success");
+    UI.showToast("Target Tabungan berhasil disimpan ke Spreadsheet", "success");
   }
 
   filterAndRenderTransactions() {
@@ -1024,7 +1083,7 @@ class App {
       if (sort === "lowest") return a.amount - b.amount;
     });
 
-    UI.renderFullTransactions(filtered);
+    UI.renderFullTransactions(filtered, this.currentTxPage, this.txPerPage);
   }
 
   renderAll() {
@@ -1050,15 +1109,23 @@ class App {
     const expenseMap = {};
     const catExpenseMap = {};
 
+    const todayStr = new Date().toISOString().substring(0, 10);
+    let todayIncome = 0;
+    let todayExpense = 0;
+
     this.transactions.forEach((t) => {
       const amt = parseFloat(t.amount) || 0;
-      if (t.date && !dates.includes(t.date)) dates.push(t.date);
+      const txDateOnly = (t.date || '').split('T')[0].split(' ')[0];
+
+      if (txDateOnly && !dates.includes(txDateOnly)) dates.push(txDateOnly);
 
       if (t.type === "Income") {
-        incomeMap[t.date] = (incomeMap[t.date] || 0) + amt;
+        incomeMap[txDateOnly] = (incomeMap[txDateOnly] || 0) + amt;
+        if (txDateOnly === todayStr) todayIncome += amt;
       } else if (t.type === "Expense") {
-        expenseMap[t.date] = (expenseMap[t.date] || 0) + amt;
+        expenseMap[txDateOnly] = (expenseMap[txDateOnly] || 0) + amt;
         catExpenseMap[t.category] = (catExpenseMap[t.category] || 0) + amt;
+        if (txDateOnly === todayStr) todayExpense += amt;
       }
     });
 
@@ -1133,14 +1200,10 @@ class App {
     this.statBarChart = new Chart(ctx3, {
       type: "bar",
       data: {
-        labels: labels,
+        labels: [todayStr],
         datasets: [
-          { label: "Pemasukan", data: incomeData, backgroundColor: "#10b981" },
-          {
-            label: "Pengeluaran",
-            data: expenseData,
-            backgroundColor: "#ef4444",
-          },
+          { label: "Pemasukan Hari Ini", data: [todayIncome], backgroundColor: "#10b981" },
+          { label: "Pengeluaran Hari Ini", data: [todayExpense], backgroundColor: "#ef4444" },
         ],
       },
       options: { responsive: true, maintainAspectRatio: false },

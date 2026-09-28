@@ -64,14 +64,6 @@ const UI = {
             }
         });
 
-        const net = income - expense - savings;
-        const savingsRate = income > 0 ? Math.max(0, Math.round((savings / income) * 100)) : 0;
-
-        let totalBudget = 0;
-        budgets.filter(b => !b.month || b.month === selectedMonth).forEach(b => {
-            totalBudget += parseFloat(b.budget) || 0;
-        });
-
         let topExpenseCat = '-';
         let maxExp = 0;
         for (const [cat, amt] of Object.entries(catExpenseMap)) {
@@ -81,19 +73,33 @@ const UI = {
             }
         }
 
-        document.getElementById('recap-income').innerText = this.formatCurrency(income);
-        document.getElementById('recap-expense').innerText = this.formatCurrency(expense);
-        document.getElementById('recap-savings').innerText = this.formatCurrency(savings);
-        
-        const netElem = document.getElementById('recap-net');
-        netElem.innerText = this.formatCurrency(net);
-        netElem.style.color = net >= 0 ? 'var(--income)' : 'var(--expense)';
+        const incomeEl = document.getElementById('rekap-total-income');
+        if (incomeEl) incomeEl.innerText = this.formatCurrency(income);
 
-        document.getElementById('recap-savings-rate').innerText = `${savingsRate}%`;
-        document.getElementById('recap-budget-status').innerText = `${this.formatCurrency(expense)} / ${this.formatCurrency(totalBudget)}`;
-        document.getElementById('recap-top-expense').innerText = topExpenseCat !== '-' ? `${topExpenseCat} (${this.formatCurrency(maxExp)})` : '-';
+        const expenseEl = document.getElementById('rekap-total-expense');
+        if (expenseEl) expenseEl.innerText = this.formatCurrency(expense);
 
-        return { month: selectedMonth, income, expense, savings, net, savingsRate, totalBudget, topExpenseCat };
+        const savingsEl = document.getElementById('rekap-total-savings');
+        if (savingsEl) savingsEl.innerText = this.formatCurrency(savings);
+
+        const topExpenseEl = document.getElementById('rekap-top-expense');
+        if (topExpenseEl) {
+            topExpenseEl.innerText = topExpenseCat !== '-' ? `${topExpenseCat} (${this.formatCurrency(maxExp)})` : '-';
+        }
+
+        const savingsRate = income > 0 ? Math.max(0, Math.round((savings / income) * 100)) : 0;
+        const net = income - expense - savings;
+
+        return {
+            month: selectedMonth,
+            totalIncome: income,
+            totalExpense: expense,
+            totalSavings: savings,
+            netCash: net,
+            savingsRatio: `${savingsRate}%`,
+            budgetUsed: expense,
+            topExpenseCategory: topExpenseCat
+        };
     },
 
     renderRecentTransactions(transactions) {
@@ -115,11 +121,12 @@ const UI = {
             const isTransfer = t.type === 'Transfer';
             const classColor = isIncome ? 'amount-income' : (isTransfer ? 'amount-transfer' : 'amount-expense');
             const prefix = isIncome ? '+' : (isTransfer ? '• ' : '-');
+            const dateOnly = (t.date || '').split('T')[0].split(' ')[0];
 
             tr.innerHTML = `
                 <td><strong>${t.description}</strong></td>
                 <td>${t.category}</td>
-                <td>${t.date}</td>
+                <td>${dateOnly}</td>
                 <td>${t.account}</td>
                 <td class="text-right ${classColor}">
                     ${prefix}${this.formatCurrency(t.amount)}
@@ -129,26 +136,36 @@ const UI = {
         });
     },
 
-    renderFullTransactions(transactions) {
+    renderFullTransactions(transactions, page = 1, limit = 10) {
         const tbody = document.querySelector('#full-transactions-table tbody');
         if (!tbody) return;
         tbody.innerHTML = '';
 
         const validTx = transactions.filter(t => t && t.id && t.description && parseFloat(t.amount) > 0);
+        const totalItems = validTx.length;
 
-        if (validTx.length === 0) {
+        if (totalItems === 0) {
             tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="color:var(--text-muted); padding:24px;">Tidak ada transaksi ditemukan.</td></tr>`;
+            this.updatePaginationUI(0, 0, 0, 1, 1);
             return;
         }
 
-        validTx.forEach(t => {
+        const totalPages = Math.ceil(totalItems / limit);
+        const currentPage = Math.min(Math.max(1, page), totalPages);
+        const startIndex = (currentPage - 1) * limit;
+        const endIndex = Math.min(startIndex + limit, totalItems);
+
+        const paginatedItems = validTx.slice(startIndex, endIndex);
+
+        paginatedItems.forEach(t => {
             const tr = document.createElement('tr');
             const isIncome = t.type === 'Income';
             const isTransfer = t.type === 'Transfer';
             const classColor = isIncome ? 'amount-income' : (isTransfer ? 'amount-transfer' : 'amount-expense');
+            const dateOnly = (t.date || '').split('T')[0].split(' ')[0];
 
             tr.innerHTML = `
-                <td>${t.date}</td>
+                <td>${dateOnly}</td>
                 <td><strong>${t.description}</strong></td>
                 <td>${t.category}</td>
                 <td>${t.account}</td>
@@ -165,7 +182,23 @@ const UI = {
             `;
             tbody.appendChild(tr);
         });
+
         if (window.lucide) window.lucide.createIcons();
+        this.updatePaginationUI(startIndex + 1, endIndex, totalItems, currentPage, totalPages);
+    },
+
+    updatePaginationUI(start, end, total, currentPage, totalPages) {
+        const infoEl = document.getElementById('tx-pagination-info');
+        if (infoEl) infoEl.innerText = `Menampilkan ${start}-${end} dari ${total}`;
+
+        const pageNumEl = document.getElementById('tx-page-num');
+        if (pageNumEl) pageNumEl.innerText = `${currentPage} / ${totalPages || 1}`;
+
+        const btnPrev = document.getElementById('btn-tx-prev');
+        if (btnPrev) btnPrev.disabled = currentPage <= 1;
+
+        const btnNext = document.getElementById('btn-tx-next');
+        if (btnNext) btnNext.disabled = currentPage >= totalPages;
     },
 
     renderBudgets(budgets, transactions) {
@@ -185,7 +218,9 @@ const UI = {
             });
 
             const budgetAmt = parseFloat(b.budget) || 1;
+            const remaining = budgetAmt - used;
             const percentage = Math.min(Math.round((used / budgetAmt) * 100), 100);
+            
             let barClass = '';
             if (percentage >= 100) barClass = 'danger';
             else if (percentage >= 80) barClass = 'warning';
@@ -207,6 +242,11 @@ const UI = {
                 <div class="progress-bg">
                     <div class="progress-fill ${barClass}" style="width: ${percentage}%;"></div>
                 </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="remaining-badge ${remaining < 0 ? 'danger' : ''}">
+                        Sisa Anggaran: ${this.formatCurrency(Math.max(0, remaining))} ${remaining < 0 ? '(Melebihi Anggaran!)' : ''}
+                    </span>
+                </div>
             `;
             container.appendChild(div);
         });
@@ -219,13 +259,14 @@ const UI = {
         container.innerHTML = '';
 
         if (goals.length === 0) {
-            container.innerHTML = `<p style="color:var(--text-muted); font-size:14px; text-align:center; padding:16px;">Belum ada Tujuan Tabungan.</p>`;
+            container.innerHTML = `<p style="color:var(--text-muted); font-size:14px; text-align:center; padding:16px;">Belum ada Target Tabungan.</p>`;
             return;
         }
 
         goals.forEach(g => {
             const current = parseFloat(g.current) || 0;
             const target = parseFloat(g.target) || 1;
+            const remainingNeeded = target - current;
             const percentage = Math.min(Math.round((current / target) * 100), 100);
             const isCompleted = current >= target;
 
@@ -243,6 +284,11 @@ const UI = {
                 <div class="progress-bg">
                     <div class="progress-fill ${isCompleted ? 'warning' : ''}" style="width: ${percentage}%;"></div>
                 </div>
+                <div>
+                    <span class="remaining-badge">
+                        ${isCompleted ? 'Target Selesai' : `Sisa Kekurangan: ${this.formatCurrency(Math.max(0, remainingNeeded))}`}
+                    </span>
+                </div>
             `;
             container.appendChild(div);
         });
@@ -250,26 +296,26 @@ const UI = {
     },
 
     renderStatistics(transactions) {
-        let income = 0;
-        let expense = 0;
+        const todayStr = new Date().toISOString().substring(0, 10);
+        let todayExpense = 0;
+        let todayIncome = 0;
         const catMap = {};
         const daysSet = new Set();
 
         transactions.filter(t => t && t.id && parseFloat(t.amount) > 0).forEach(t => {
             const amt = parseFloat(t.amount) || 0;
-            if (t.date) daysSet.add(t.date);
+            if (t.date) daysSet.add((t.date || '').split('T')[0].split(' ')[0]);
 
-            if (t.type === 'Income') {
-                income += amt;
-            } else if (t.type === 'Expense') {
-                expense += amt;
-                catMap[t.category] = (catMap[t.category] || 0) + amt;
+            const txDateOnly = (t.date || '').split('T')[0].split(' ')[0];
+            if (txDateOnly === todayStr) {
+                if (t.type === 'Expense') {
+                    todayExpense += amt;
+                    catMap[t.category] = (catMap[t.category] || 0) + amt;
+                } else if (t.type === 'Income') {
+                    todayIncome += amt;
+                }
             }
         });
-
-        const rate = income > 0 ? Math.max(0, Math.round(((income - expense) / income) * 100)) : 0;
-        const rateElem = document.getElementById('stat-savings-rate');
-        if (rateElem) rateElem.innerText = `${rate}%`;
 
         let topCat = '-';
         let maxAmt = 0;
@@ -279,12 +325,20 @@ const UI = {
                 topCat = cat;
             }
         }
-        const topCatElem = document.getElementById('stat-top-category');
-        if (topCatElem) topCatElem.innerText = topCat;
 
-        const daysCount = daysSet.size || 1;
-        const dailyAvg = expense / daysCount;
+        const topCatElem = document.getElementById('stat-top-category');
+        if (topCatElem) topCatElem.innerText = topCat !== '-' ? `${topCat} (${this.formatCurrency(maxAmt)})` : '-';
+
+        const totalDays = daysSet.size || 1;
+        let totalExpenseAllDays = 0;
+        transactions.filter(t => t.type === 'Expense').forEach(t => { totalExpenseAllDays += parseFloat(t.amount) || 0; });
+        const dailyAvg = totalExpenseAllDays / totalDays;
+
         const dailyAvgElem = document.getElementById('stat-daily-avg');
         if (dailyAvgElem) dailyAvgElem.innerText = this.formatCurrency(dailyAvg);
+
+        const dailyRatio = todayIncome > 0 ? Math.round((todayExpense / todayIncome) * 100) : (todayExpense > 0 ? 100 : 0);
+        const dailyRatioElem = document.getElementById('stat-daily-ratio');
+        if (dailyRatioElem) dailyRatioElem.innerText = `${dailyRatio}%`;
     }
 };

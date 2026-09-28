@@ -18,7 +18,7 @@
     --radius-lg: 16px;
     --radius-md: 10px;
     --radius-sm: 6px;
-    --font: 'Inter', -apple-system, sans-serif;
+    --font: 'poppins', -apple-system, sans-serif;
     --sidebar-width: 260px;
 }
 
@@ -49,11 +49,29 @@ body {
     min-height: 100vh;
 }
 
-/* Visibility Helper: Tombol Gear & Theme Card Mobile Tersembunyi Secara Default (Desktop) */
-.mobile-settings-icon { display: none !important; }
-.mobile-theme-card { display: none !important; }
+.mobile-brand-header { display: none; }
 
-/* Modal Overlay Fix */
+/* UKURAN TEKS NOTIFIKASI SINKRONISASI/UPDATE DISAMAKAN DENAN JAM GREETINGS (14px Desktop, 11px Mobile) */
+.update-notice-paragraph {
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--income);
+}
+
+.update-notice-paragraph.warning-notice {
+    color: var(--expense);
+}
+
+.greeting-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -188,7 +206,6 @@ body {
 
 .status-dot { width: 8px; height: 8px; border-radius: 50%; }
 .status-dot.green { background: var(--income); }
-.status-dot.yellow { background: #f59e0b; }
 
 .theme-toggle-btn {
     display: flex;
@@ -226,19 +243,7 @@ body {
 
 .user-greeting {
     display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.greeting-info {
-    display: flex;
     flex-direction: column;
-}
-
-.greeting-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 .header-actions {
@@ -250,14 +255,36 @@ body {
 .user-greeting h1 { font-size: 24px; font-weight: 700; }
 .user-greeting p { color: var(--text-muted); font-size: 14px; }
 
-/* Styles Khusus Tombol Logout */
+.google-svg-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.google-btn-desktop {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-avatar-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--primary);
+    flex-shrink: 0;
+}
+
+.user-avatar-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .btn-logout-danger {
     color: var(--expense) !important;
     border-color: var(--expense) !important;
-}
-
-.btn-logout-danger:hover {
-    background-color: rgba(239, 68, 68, 0.1) !important;
 }
 
 /* Cards & Grid Desktop */
@@ -317,7 +344,59 @@ body {
 
 .mt-4 { margin-top: 24px; }
 .mt-3 { margin-top: 16px; }
+.mb-4 { margin-bottom: 24px; }
 .max-w-600 { max-width: 600px; }
+
+/* Rekap Keuangan Bulanan Card */
+.rekap-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-top: 8px;
+}
+
+.rekap-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--border-color);
+    font-size: 14px;
+}
+
+.rekap-item-row:last-child {
+    border-bottom: none;
+}
+
+.rekap-label {
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.rekap-value {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.rekap-value.income-val { color: var(--income); }
+.rekap-value.expense-val { color: var(--expense); }
+.rekap-value.savings-val { color: var(--primary); }
+
+.remaining-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--primary);
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.remaining-badge.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--expense);
+}
 
 /* Charts Desktop */
 .chart-container {
@@ -388,6 +467,20 @@ body {
 
 .filter-controls { display: flex; gap: 8px; flex-wrap: wrap; }
 
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pagination-info { font-size: 13px; color: var(--text-muted); }
+.pagination-buttons { display: flex; align-items: center; gap: 8px; }
+.pagination-page-num { font-size: 13px; font-weight: 600; padding: 0 8px; }
+
 /* Form Controls & Buttons Desktop */
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
@@ -404,7 +497,6 @@ body {
 
 .select-md { width: auto; padding: 8px 12px; }
 
-/* SEGMENTED CONTROL TEMA WARNA JENIS TRANSAKSI */
 .segmented-control {
     display: flex;
     background: var(--bg-primary);
@@ -427,26 +519,22 @@ body {
     transition: all 0.2s ease;
 }
 
-/* WARNA SELEKSI KHUSUS MODAL TRANSAKSI */
 .segmented-control input#type-expense:checked + label.lbl-expense {
     background: #ef4444 !important;
     color: #ffffff !important;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
 }
 
 .segmented-control input#type-income:checked + label.lbl-income {
     background: #10b981 !important;
     color: #ffffff !important;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
 }
 
 .segmented-control input#type-transfer:checked + label.lbl-transfer {
     background: #3b82f6 !important;
     color: #ffffff !important;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
 }
 
 .btn {
@@ -468,7 +556,7 @@ body {
     height: 10px;
     width: 100%;
     overflow: hidden;
-    margin: 8px 0;
+    margin: 8px 0 4px 0;
 }
 
 .progress-fill {
@@ -514,9 +602,7 @@ body {
 .view-section.active { display: block; }
 .mobile-bottom-nav { display: none; }
 
-/* =========================================================
-   RESPONSIVE MOBILE & TABLET BREAKPOINTS (768px HINGGA < 410px)
-   ========================================================= */
+/* Responsive Media Query Tablet / Laptop Kecil */
 @media (max-width: 768px) {
     .sidebar { display: none; }
 
@@ -527,87 +613,17 @@ body {
         padding-bottom: 90px;
     }
 
-    /* HEADER MOBILE & TABLET LAYOUT */
-    .top-header {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        gap: 8px !important;
-        margin-bottom: 16px !important;
+    /* Memberikan ruang bawah pada konten utama agar tidak tertutup bottom navbar */
+    .main-content {
+        margin-left: 0 !important;
         width: 100% !important;
+        padding: 16px;
+        padding-bottom: 100px !important; /* Ditambah agar leluasa saat discroll sampai paling bawah */
     }
 
-    .user-greeting {
-        flex: 1 !important;
-        min-width: 0 !important;
-        gap: 8px !important;
-    }
-
-    .greeting-info {
-        min-width: 0 !important;
-        flex: 1 !important;
-    }
-
-    .greeting-title {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-    }
-
-    .user-greeting h1 {
-        font-size: 18px;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-    }
-
-    .user-greeting p {
-        font-size: 12px;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-    }
-
-    .header-actions {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* Hide Tombol Tambah Transaksi Header di Mobile/Tablet */
-    .desktop-add-btn { display: none !important; }
-
-    /* Ubah Baik Tombol Login Google Maupun Logout Menjadi Ikon Lingkaran di Mobile/Tablet */
-    .btn-google-auth {
-        padding: 0 !important;
-        border-radius: 50% !important;
-        width: 38px !important;
-        height: 38px !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex-shrink: 0 !important;
-    }
-    .btn-text-desktop { display: none !important; }
-
-    /* TAMPILKAN TOMBOL GEAR SETTINGS HANYA DI MOBILE & TABLET */
-    .mobile-settings-icon {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 0 !important;
-        border-radius: 50% !important;
-        width: 38px !important;
-        height: 38px !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* Sakelar Tema di Bawah Menu Home */
-    .mobile-theme-card {
-        display: block !important;
-        margin-bottom: 32px !important;
-        padding-bottom: 16px !important;
+    /* Kelas khusus untuk elemen/card paling bawah di setiap view */
+    .mb-mobile-nav {
+        margin-bottom: 90px !important;
     }
 
     .grid-2col { grid-template-columns: 1fr; }
@@ -656,86 +672,95 @@ body {
     .table-filter-bar { flex-direction: column; align-items: stretch; }
     .filter-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .filter-controls select { width: 100%; }
-
-    /* TABEL MANAJER KATEGORI DI SETTINGS MOBILE/TABLET */
-    #categories-manage-table {
-        table-layout: fixed !important;
-        width: 100% !important;
-    }
-
-    #categories-manage-table th, 
-    #categories-manage-table td {
-        padding: 8px 4px !important;
-        font-size: 13px !important;
-    }
-
-    #categories-manage-table th:nth-child(1),
-    #categories-manage-table td:nth-child(1) { width: 45% !important; }
-    #categories-manage-table th:nth-child(2),
-    #categories-manage-table td:nth-child(2) { width: 25% !important; }
-    #categories-manage-table th:nth-child(3),
-    #categories-manage-table td:nth-child(3) { width: 30% !important; }
 }
 
-/* KHUSUS OPTIMASI LAYAR SANGAT KECIL (< 410px) */
-@media (max-width: 410px) {
+/* Responsive Mode Mobile <= 470px */
+@media (max-width: 470px) {
     .main-content {
         padding: 12px;
+        padding-bottom: 110px !important; /* Ruang ekstra untuk layar mobile kecil */
+    }
+
+    .mb-mobile-nav {
+        margin-bottom: 95px !important;
+    }
+
+    .mobile-brand-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 12px 14px;
+        margin-bottom: 12px;
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+    }
+
+    .mobile-brand-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .mobile-brand-left .brand-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-brand-left .brand-text h2 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.1;
+    }
+
+    .mobile-brand-left .brand-text span {
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+
+    .mobile-brand-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .mobile-brand-right .btn-sm {
+        padding: 0 !important;
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 50% !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .mb-mobile-nav {
+        margin-bottom: 85px !important;
+    }
+
+    /* MENGHILANGKAN CONTAINER AKSI DESKTOP DENGAN TEGAS PADA LAYAR MOBILE */
+    .desktop-only-actions {
+        display: none !important;
+    }
+
+    .top-header {
+        margin-bottom: 16px !important;
     }
 
     .user-greeting h1 {
         font-size: 18px !important;
     }
 
-    .user-greeting p {
-        font-size: 10px !important;
-    }
-
-    .btn-icon-add {
-        width: 22px !important;
-        height: 22px !important;
-        font-size: 14px !important;
-    }
-
-    .btn-google-auth, .mobile-settings-icon {
-        width: 32px !important;
-        height: 32px !important;
-    }
-
-    .btn-google-auth svg, .btn-google-auth i {
-        width: 16px !important;
-        height: 16px !important;
-    }
-
-    .mobile-settings-icon i {
-        width: 16px !important;
-        height: 16px !important;
-    }
-
-    .mobile-theme-card {
-        margin-bottom: 40px !important;
-        padding-bottom: 20px !important;
-    }
-
-    .cat-action-btns {
-        display: flex !important;
-        gap: 6px !important;
-        justify-content: center !important;
-        align-items: center !important;
-    }
-
-    .cat-action-btns .btn-sm {
-        padding: 5px 7px !important;
-        min-width: 28px !important;
-        height: 28px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    .cat-action-btns .btn-sm i {
-        width: 13px !important;
-        height: 13px !important;
+    /* Ukuran Jam/Tanggal & Notifikasi disamakan persis di Mobile (11px) */
+    .user-greeting p, .update-notice-paragraph {
+        font-size: 11px !important;
     }
 
     .summary-cards { grid-template-columns: 1fr; }

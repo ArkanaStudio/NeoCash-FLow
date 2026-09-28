@@ -2,13 +2,15 @@
 function doGet(e) {
   setupDatabase();
   const action = e.parameter.action;
+  const userEmail = e.parameter.userEmail || '';
   
-  if (action === 'getTransactions') return responseJSON(getTableData('Transactions'));
-  if (action === 'getBudgets') return responseJSON(getTableData('Budgets'));
-  if (action === 'getGoals') return responseJSON(getTableData('Goals'));
-  if (action === 'getCategories') return responseJSON(getTableData('Categories'));
+  if (action === 'getTransactions') return responseJSON(getTableData('Transactions', userEmail));
+  if (action === 'getBudgets') return responseJSON(getTableData('Budgets', userEmail));
+  if (action === 'getGoals') return responseJSON(getTableData('Goals', userEmail));
+  if (action === 'getCategories') return responseJSON(getTableData('Categories', userEmail));
+  if (action === 'getMonthlyRecap') return responseJSON(getTableData('MonthlyRecap', userEmail));
   
-  return responseJSON({ status: 'success', message: 'Finora API Active' });
+  return responseJSON({ status: 'success', message: 'Neocash API Active' });
 }
 
 function doPost(e) {
@@ -24,6 +26,7 @@ function doPost(e) {
     }
 
     const action = contents.action;
+    const userEmail = contents.userEmail || '';
     
     // 1. TRANSACTIONS
     if (action === 'addTransaction') {
@@ -36,6 +39,7 @@ function doPost(e) {
       const sheet = ss.getSheetByName('Transactions');
       
       const now = new Date();
+      // Format YYYY-MM-DD
       const formattedDate = contents.date ? formatDateString(contents.date) : formatDateString(now);
       const nowStr = formatTimestamp(now);
       const id = contents.id || 'TRX_' + Date.now();
@@ -50,7 +54,8 @@ function doPost(e) {
         amount,
         contents.notes || '',
         nowStr,
-        nowStr
+        nowStr,
+        userEmail
       ]);
 
       ensureCategoryExists(contents.category, contents.type);
@@ -93,6 +98,18 @@ function doPost(e) {
       deleteRowById('Goals', contents.id);
       return responseJSON({ status: 'success' });
     }
+
+    // 4. MONTHLY RECAP
+    if (action === 'saveMonthlySummary') {
+      upsertMonthlyRecap(contents);
+      return responseJSON({ status: 'success' });
+    }
+
+    // 5. CATEGORIES
+    if (action === 'addCategory') {
+      ensureCategoryExists(contents.name, contents.type);
+      return responseJSON({ status: 'success' });
+    }
     
     return responseJSON({ status: 'error', message: 'Action not supported' });
   } catch (err) {
@@ -100,14 +117,15 @@ function doPost(e) {
   }
 }
 
-// Inisialisasi Database & Header Resmi Termasuk Kolom USED
+// Inisialisasi Database
 function setupDatabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheets = [
-    { name: 'Transactions', headers: ['ID', 'Date', 'Type', 'Description', 'Category', 'Account', 'Amount', 'Notes', 'CreatedAt', 'UpdatedAt'] },
-    { name: 'Budgets', headers: ['ID', 'Month', 'Category', 'Budget', 'Used', 'CreatedAt'] },
-    { name: 'Goals', headers: ['ID', 'Goal', 'Target', 'Current', 'Deadline', 'CreatedAt'] },
-    { name: 'Categories', headers: ['ID', 'Name', 'Type', 'Icon', 'Color'] }
+    { name: 'Transactions', headers: ['ID', 'Date', 'Type', 'Description', 'Category', 'Account', 'Amount', 'Notes', 'CreatedAt', 'UpdatedAt', 'User_Email'] },
+    { name: 'Budgets', headers: ['ID', 'Month', 'Category', 'Budget', 'Used', 'CreatedAt', 'User_Email'] },
+    { name: 'Goals', headers: ['ID', 'Goal', 'Target', 'Current', 'Deadline', 'CreatedAt', 'User_Email'] },
+    { name: 'Categories', headers: ['ID', 'Name', 'Type', 'Icon', 'Color'] },
+    { name: 'MonthlyRecap', headers: ['Month', 'Income', 'Expense', 'Savings', 'NetCash', 'SavingsRate', 'TotalBudget', 'TopExpenseCat', 'UpdatedAt', 'User_Email'] }
   ];
 
   sheets.forEach(s => {
@@ -116,9 +134,6 @@ function setupDatabase() {
       sheet = ss.insertSheet(s.name);
       sheet.appendRow(s.headers);
       sheet.getRange(1, 1, 1, s.headers.length).setFontWeight('bold');
-    } else {
-      // Pastikan baris header selalu sesuai urutan standar resmi
-      sheet.getRange(1, 1, 1, s.headers.length).setValues([s.headers]).setFontWeight('bold');
     }
   });
 }
@@ -143,13 +158,11 @@ function ensureCategoryExists(categoryName, type) {
   }
 }
 
-// PEMBACAAN DATA PRESISI BERDASARKAN INDEKS NAMA HEADER
-function getTableData(sheetName) {
+function getTableData(sheetName, filterEmail) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) return [];
   
-  // Jika membaca sheet Budgets, perbarui kolom 'Used' secara real-time dari Sheet Transactions
   if (sheetName === 'Budgets') {
     recalculateBudgetsUsed();
   }
@@ -159,6 +172,7 @@ function getTableData(sheetName) {
   if (rawValues.length <= 1) return [];
   
   const headers = rawValues[0].map(h => String(h).trim().toLowerCase());
+  const emailIdx = headers.indexOf('user_email');
   const results = [];
 
   for (let i = 1; i < rawValues.length; i++) {
@@ -167,13 +181,21 @@ function getTableData(sheetName) {
 
     if (!rowRaw[0] || String(rowRaw[0]).trim() === '') continue;
 
+    // Filter berdasarkan email user jika ada
+    if (filterEmail && emailIdx !== -1) {
+      const rowEmail = String(rowDisplay[emailIdx] || '').trim().toLowerCase();
+      if (rowEmail && rowEmail !== filterEmail.toLowerCase() && rowEmail !== 'guest') {
+        continue;
+      }
+    }
+
     let obj = {};
     headers.forEach((key, idx) => {
       let val = rowDisplay[idx];
 
       if (key === 'date' || key === 'month') {
         val = formatDateString(rowRaw[idx] || val);
-      } else if (key === 'budget' || key === 'target' || key === 'current' || key === 'amount' || key === 'used') {
+      } else if (key === 'budget' || key === 'target' || key === 'current' || key === 'amount' || key === 'used' || key === 'income' || key === 'expense' || key === 'savings' || key === 'netcash') {
         val = Number(rowRaw[idx]) || 0;
       } else {
         val = String(val || '').trim();
@@ -187,7 +209,6 @@ function getTableData(sheetName) {
   return results;
 }
 
-// Menghitung Ulang Kolom USED untuk Setiap Budget Berdasarkan Pengeluaran di Sheet Transactions
 function recalculateBudgetsUsed() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const bgSheet = ss.getSheetByName('Budgets');
@@ -198,23 +219,59 @@ function recalculateBudgetsUsed() {
   const txData = txSheet.getDataRange().getValues();
   if (bgData.length <= 1) return;
 
-  // Hitung total pengeluaran per kategori dari Transactions
   const categoryExpenses = {};
   for (let j = 1; j < txData.length; j++) {
-    const type = String(txData[j][2] || '').trim(); // Type
-    const cat = String(txData[j][4] || '').trim().toLowerCase(); // Category
-    const amt = Number(txData[j][6]) || 0; // Amount
+    const type = String(txData[j][2] || '').trim();
+    const cat = String(txData[j][4] || '').trim().toLowerCase();
+    const amt = Number(txData[j][6]) || 0;
 
     if (type === 'Expense' && cat) {
       categoryExpenses[cat] = (categoryExpenses[cat] || 0) + amt;
     }
   }
 
-  // Update nilai kolom USED (Kolom E / Kolom ke-5) pada Sheet Budgets
   for (let i = 1; i < bgData.length; i++) {
     const bgCat = String(bgData[i][2] || '').trim().toLowerCase();
     const usedAmt = categoryExpenses[bgCat] || 0;
     bgSheet.getRange(i + 1, 5).setValue(usedAmt);
+  }
+}
+
+function upsertMonthlyRecap(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('MonthlyRecap');
+  if (!sheet) {
+    sheet = ss.insertSheet('MonthlyRecap');
+    sheet.appendRow(['Month', 'Income', 'Expense', 'Savings', 'NetCash', 'SavingsRate', 'TotalBudget', 'TopExpenseCat', 'UpdatedAt', 'User_Email']);
+  }
+
+  const rows = sheet.getDataRange().getValues();
+  const targetMonth = String(data.month || new Date().toISOString().substring(0, 7)).trim();
+  const now = new Date().toISOString();
+  const userEmail = data.userEmail || '';
+
+  const income = Number(data.totalIncome) || 0;
+  const expense = Number(data.totalExpense) || 0;
+  const savings = Number(data.totalSavings) || 0;
+  const netCash = income - expense - savings;
+  const savingsRate = data.savingsRatio || '0%';
+  const totalBudget = Number(data.budgetUsed) || 0;
+  const topExpenseCat = data.topExpenseCategory || '-';
+
+  let foundIndex = -1;
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === targetMonth) {
+      foundIndex = i + 1;
+      break;
+    }
+  }
+
+  const rowValues = [targetMonth, income, expense, savings, netCash, savingsRate, totalBudget, topExpenseCat, now, userEmail];
+
+  if (foundIndex > 0) {
+    sheet.getRange(foundIndex, 1, 1, rowValues.length).setValues([rowValues]);
+  } else {
+    sheet.appendRow(rowValues);
   }
 }
 
@@ -274,17 +331,12 @@ function updateTransactionRow(data) {
   }
 }
 
-// UPSERT BUDGET DENGAN STRUCTURE FIX: [ ID | Month | Category | Budget | Used | CreatedAt ]
 function upsertBudget(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('Budgets');
-  
-  // Pastikan Header Baris 1 Terpasang Presisi
-  sheet.getRange(1, 1, 1, 6).setValues([['ID', 'Month', 'Category', 'Budget', 'Used', 'CreatedAt']]).setFontWeight('bold');
-
   const rows = sheet.getDataRange().getDisplayValues();
   const now = new Date();
-  const realtimeMonth = formatYearMonth(now); // YYYY-MM
+  const realtimeMonth = formatYearMonth(now);
   
   const targetCat = String(data.category || '').trim();
   const targetMonth = (data.month && String(data.month).trim().length === 7) 
@@ -293,10 +345,10 @@ function upsertBudget(data) {
   
   const budgetAmount = Number(data.budget) || 0;
   const budgetId = data.id || 'BDG_' + Date.now();
+  const userEmail = data.userEmail || '';
 
-  // Hitung total terpakai dari Sheet Transactions
-  const txSheet = ss.getSheetByName('Transactions');
   let usedAmount = 0;
+  const txSheet = ss.getSheetByName('Transactions');
   if (txSheet) {
     const txData = txSheet.getDataRange().getValues();
     for (let j = 1; j < txData.length; j++) {
@@ -322,12 +374,10 @@ function upsertBudget(data) {
   }
 
   if (foundIndex > 0) {
-    // Update Sel Budget (Kolom D) dan Used (Kolom E)
     sheet.getRange(foundIndex, 4).setValue(budgetAmount);
     sheet.getRange(foundIndex, 5).setValue(usedAmount);
   } else {
-    // [ A: ID | B: Month | C: Category | D: Budget | E: Used | F: CreatedAt ]
-    sheet.appendRow([budgetId, targetMonth, targetCat, budgetAmount, usedAmount, formatTimestamp(now)]);
+    sheet.appendRow([budgetId, targetMonth, targetCat, budgetAmount, usedAmount, formatTimestamp(now), userEmail]);
   }
 }
 
@@ -338,6 +388,7 @@ function upsertGoal(data) {
   let found = false;
   const id = data.id || 'GOL_' + Date.now();
   const searchId = String(id).trim();
+  const userEmail = data.userEmail || '';
 
   for (let i = 1; i < rows.length; i++) {
     if (String(rows[i][0]).trim() === searchId) {
@@ -347,17 +398,15 @@ function upsertGoal(data) {
     }
   }
   if (!found) {
-    sheet.appendRow([id, data.goal, Number(data.target) || 0, Number(data.current) || 0, data.deadline || '', formatTimestamp(new Date())]);
+    sheet.appendRow([id, data.goal, Number(data.target) || 0, Number(data.current) || 0, data.deadline || '', formatTimestamp(new Date()), userEmail]);
   }
 }
 
-// HELPER: Format YYYY-MM
 function formatYearMonth(d) {
   const pad = (n) => (n < 10 ? '0' + n : n);
   return d.getFullYear() + '-' + pad(d.getMonth() + 1);
 }
 
-// HELPER: Format YYYY-MM-DD
 function formatDateString(dateVal) {
   if (!dateVal) return formatYearMonth(new Date()) + '-' + (new Date().getDate() < 10 ? '0' + new Date().getDate() : new Date().getDate());
   if (dateVal instanceof Date) {
@@ -369,7 +418,6 @@ function formatDateString(dateVal) {
   return str;
 }
 
-// HELPER: Format Timestamp (YYYY-MM-DD HH:mm:ss)
 function formatTimestamp(d) {
   const pad = (n) => (n < 10 ? '0' + n : n);
   return d.getFullYear() + '-' +
