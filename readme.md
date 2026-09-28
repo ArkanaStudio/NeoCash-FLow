@@ -1,8 +1,8 @@
-# 💸 NeoCash — Smart Personal Finance & Budget Planner
+# 💸 NeoCash — Pencatat Budget Pengeluaran
 
 **NeoCash** adalah aplikasi manajemen keuangan pribadi berbasis web (*Client-Side App*) yang cepat, responsif, dan terintegrasi langsung secara privat dengan **Google Spreadsheet** Anda. 
 
-Dengan NeoCash, Anda dapat mencatat arus kas (*income & expense*), mengatur anggaran bulanan (*budgeting*), memantau target tabungan (*savings goals*), serta melihat analitik grafik keuangan secara *real-time* tanpa biaya langganan dan tanpa risiko kebocoran data.
+Dengan NeoCash, Anda dapat mencatat arus kas (*Pemasukan & Pengeluaran*), mengatur anggaran bulanan (*Budgeting*), memantau target tabungan (*Savings Goals*), serta melihat analitik grafik keuangan secara *real-time* tanpa biaya langganan dan tanpa risiko kebocoran data.
 
 ## 🚀 **Coba Aplikasi Langsung:** [NeoCash Web App](https://neocash-flow.vercel.app/)
 
@@ -11,8 +11,8 @@ Dengan NeoCash, Anda dapat mencatat arus kas (*income & expense*), mengatur angg
 ## ✨ Fitur Utama
 
 - **📊 Dashboard Interaktif:** Ringkasan Total Saldo, Pemasukan, Pengeluaran, dan Tabungan secara *real-time*.
-- **📝 Transaksi & Arus Kas:** Pencatatan cepat untuk transaksi *Income*, *Expense*, maupun *Transfer/Savings* beserta kategori dan sumber akun (*Bank*, *Cash*, *E-Wallet*).
-- **💡 Top-Up Tabungan Langsung (+):** Fitur setoran cepat tabungan dari kartu dashboard yang otomatis memotong saldo utama dan mengalokasikannya ke *Savings Goal*.
+- **📝 Transaksi & Arus Kas:** Pencatatan cepat untuk transaksi *Pemasukan*, *Pengeluaran*, maupun *Tabungan* beserta kategori dan sumber akun (*Bank*, *Cash*, *E-Wallet*) yang sudah otomatis tercatat pada database *Spreadsheet pribadi kalian*.
+- **💡 Top-Up Tabungan Langsung (+):** Fitur setoran cepat tabungan dari kartu dashboard yang otomatis memotong saldo utama dan mengalokasikannya ke *Savings/Goals*.
 - **🎯 Budgeting & Savings Goals:** Pengaturan batas anggaran per kategori dan target tabungan masa depan dengan indikator progres visual.
 - **📈 Statistik & Analitik Visual:** Grafik *Cash Flow* dan diagram lingkaran pengeluaran berbasis *Chart.js*.
 - **🔒 100% Privat & Aman:** Data tersimpan privat di Google Spreadsheet milik Anda sendiri melalui Google Apps Script Web App.
@@ -28,28 +28,28 @@ Untuk mulai menggunakan **NeoCash** dan menghubungkannya dengan Google Spreadshe
 1. Buka [Template Google Spreadsheet NeoCash] : (https://docs.google.com/spreadsheets/d/16sTupGcc96sMVZoPu_62o1NiTpe9D-PaZF21OIcAKHQ/copy?usp=sharing) .
 2. Setelah buka link kalian bisa langsung klik buat salinan , maka template spreadsheetsnya nanti langsung otomatis muncul ke google sheets kalian, jika nanti ketika kalian salin apps scriptnya tidak muncul maka kalian bisa klik **tampilkan apps script** lalu copas kodenya dan paste dibagian kode.gs setelah itu klik **CTRL + S** :
 
-   <img width="1920" height="828" alt="2" src="https://github.com/user-attachments/assets/0ab9bff2-55d2-4589-8696-7f62a0385241" />
+   <img width="1920" height="828" alt="2" src="https://github.com/user-attachments/assets/926241dc-7422-4869-b212-8e8ad9613089" />
 
 3. Setelah buat salinan , maka akan muncul template sheets seperti ini :
 
-   <img width="1918" height="937" alt="awal" src="https://github.com/user-attachments/assets/f632e1e3-5b66-42f2-b146-c8ad4fe496d6" />
+   <img width="1918" height="937" alt="awal" src="https://github.com/user-attachments/assets/db5bf277-73b2-40a8-b74c-629d914d0b5a" />
 
 
 
 ### Langkah 2: Deploy Google Apps Script
 1. Pada spreadsheet salinan milik Anda, klik menu **Extensions** (Ekstensi) > **Apps Script**. :
 
-   <img width="1908" height="654" alt="0" src="https://github.com/user-attachments/assets/5afc4da5-039c-4bbd-87ac-d1958f061e0a" />
+   <img width="1908" height="654" alt="0" src="https://github.com/user-attachments/assets/621c600f-f357-4549-a0f3-b2eb91d0ff06" />
 
-   <img width="1920" height="549" alt="1" src="https://github.com/user-attachments/assets/a4ecf8bd-f209-488c-b7f1-ecf838ae515d" />
+   <img width="1920" height="549" alt="1" src="https://github.com/user-attachments/assets/ef29ccab-1226-483e-92b9-df798522fed7" />
 
 
 
 2. Klik tombol **Terapkan** di pojok kanan atas > pilih **deployment baru**.
 
-   <img width="1920" height="897" alt="3" src="https://github.com/user-attachments/assets/3a4fb206-d0b6-4965-9e14-c9abfa50d47e" />
+   <img width="1920" height="897" alt="3" src="https://github.com/user-attachments/assets/85e59a7d-d174-481c-9e20-850b83a5959a" />
 
-   <img width="1917" height="889" alt="4" src="https://github.com/user-attachments/assets/6e52da28-b068-4050-b43c-ea9f708a2ed2" />
+   <img width="1917" height="889" alt="4" src="https://github.com/user-attachments/assets/5adff736-a4ba-400e-8fbe-76a9edd0cd03" />
 
    
 
@@ -60,24 +60,24 @@ Untuk mulai menggunakan **NeoCash** dan menghubungkannya dengan Google Spreadshe
    - **Jalankan sebagai :** `Saya (email-anda@gmail.com)`
    - **Yang memiliki akses :** `Siapa Saja` *(Penting agar aplikasi dapat mengirim & membaca data)*
      
-     <img width="1192" height="871" alt="5" src="https://github.com/user-attachments/assets/18ce3ec5-95b5-4f96-a7b4-209528a03c30" />
+     <img width="1192" height="871" alt="5" src="https://github.com/user-attachments/assets/f63bf879-21c0-4abb-8df0-158dc8b587c1" />
 
 
 4. Klik **Terapkan** dan setujui akses (**Izinkan Akses**).
 
-   <img width="1194" height="861" alt="6" src="https://github.com/user-attachments/assets/21ce6f3f-fcc5-4932-a8a8-4c62e3dd15c0" />
+   <img width="1194" height="861" alt="6" src="https://github.com/user-attachments/assets/d941f7a4-30b3-4b69-a32b-4280aea4d31b" />
 
 5. Langkah selanjutnya verified google , pilih show advanced lalu pilih **go to project tak berjudul** :
    
-   <img width="1072" height="994" alt="7" src="https://github.com/user-attachments/assets/ac96e076-08f6-49d7-88be-5690df137fd5" />
+   <img width="1072" height="994" alt="7" src="https://github.com/user-attachments/assets/f801ee8c-4986-4bb0-870f-527a25719799" />
 
 6. Lalu Scroll kebawah dan pilih **Continue** :
 
-   <img width="1018" height="837" alt="8" src="https://github.com/user-attachments/assets/7cf9abfa-6920-4c6a-b894-3654d6403d88" />
+   <img width="1018" height="837" alt="8" src="https://github.com/user-attachments/assets/6e8b0aa9-e2ab-4d35-9caf-bfb10bef0f19" />
 
 7. Setelah prosesnya selesai kalian tinggal **Copy Link URL-nya** :
 
-   <img width="1216" height="874" alt="9" src="https://github.com/user-attachments/assets/54e1d5e2-58c5-4c0e-81eb-e88b75207aa4" />
+   <img width="1216" height="874" alt="9" src="https://github.com/user-attachments/assets/895986af-2bf4-478e-8378-ae4bb80572e6" />
 
 
 ### Langkah 3: Hubungkan ke Web NeoCash
@@ -88,7 +88,7 @@ Untuk mulai menggunakan **NeoCash** dan menghubungkannya dengan Google Spreadshe
 4. Klik **Save Configuration**.
 5. Selesai! Seluruh pencatatan Anda sekarang otomatis tersimpan di Google Spreadsheet Anda.
 
-   <img width="1915" height="946" alt="10" src="https://github.com/user-attachments/assets/b37cf3ff-0d55-4854-8922-f66bcbf3ab6b" />
+   <img width="1915" height="946" alt="10" src="https://github.com/user-attachments/assets/5fcda833-54f6-49bb-9973-18f7c39e2094" />
 
 
 ---
