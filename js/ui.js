@@ -234,7 +234,7 @@ const UI = {
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:600;">
                     <span>${b.category}</span>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:13px; font-weight:normal;">${this.formatCurrency(used)} / ${this.formatCurrency(budgetAmt)} (${percentage}%)</span>
+                        <span class="budget-info" style="font-weight:normal;">${this.formatCurrency(used)} / ${this.formatCurrency(budgetAmt)} (${percentage}%)</span>
                         <button class="btn btn-text" onclick="window.editBudget('${b.category}', ${b.budget})"><i data-lucide="edit-2" style="width:14px;"></i></button>
                         <button class="btn btn-text" onclick="window.deleteBudget('${bgId}', '${b.category}', '${bgMonth}')" style="color:var(--expense);"><i data-lucide="trash-2" style="width:14px;"></i></button>
                     </div>
@@ -276,7 +276,7 @@ const UI = {
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:600;">
                     <span>${g.goal} ${isCompleted ? '🎉 (Tercapai!)' : ''}</span>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:13px; font-weight:normal;">${this.formatCurrency(current)} / ${this.formatCurrency(target)} (${percentage}%)</span>
+                        <span class="budget-info" style="font-weight:normal;">${this.formatCurrency(current)} / ${this.formatCurrency(target)} (${percentage}%)</span>
                         <button class="btn btn-text" onclick="window.editGoal('${g.id}')"><i data-lucide="edit-2" style="width:14px;"></i></button>
                         <button class="btn btn-text" onclick="window.deleteGoal('${g.id}')" style="color:var(--expense);"><i data-lucide="trash-2" style="width:14px;"></i></button>
                     </div>

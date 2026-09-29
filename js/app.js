@@ -13,7 +13,14 @@ function handleGoogleSignIn(response) {
 
     const payload = JSON.parse(jsonPayload);
 
-    if (payload.name) Storage.setUsername(payload.name);
+    let firstName = payload.name;
+    if (payload.given_name) {
+      firstName = payload.given_name;
+    } else if (payload.name && payload.name.trim() !== "") {
+      firstName = payload.name.trim().split(" ")[0];
+    }
+
+    if (firstName) Storage.setUsername(firstName);
     if (payload.email) Storage.setUserEmail(payload.email);
     if (payload.picture) Storage.setUserAvatar(payload.picture);
 
@@ -24,7 +31,7 @@ function handleGoogleSignIn(response) {
       window.appInstance.init();
     }
 
-    UI.showToast(`Berhasil masuk sebagai ${payload.name}!`, "success");
+    UI.showToast(`Berhasil masuk sebagai ${firstName}!`, "success");
   } catch (e) {
     console.error("Gagal memproses Google Sign-In:", e);
     UI.showToast("Gagal masuk dengan akun Google.", "warning");
@@ -47,6 +54,7 @@ class App {
     this.cashFlowChart = null;
     this.categoryChart = null;
     this.statBarChart = null;
+    this.mobileStatBarChart = null;
 
     this.init();
   }
@@ -59,10 +67,9 @@ class App {
     this.initAuthModal();
     this.updateAuthUI();
     this.initEventListeners();
+    this.initCalculator();
     this.populateCategories();
 
-    // DENGAN KODINGAN INI ANDA DAPAT MENGATUR PEMBERITAHUAN UPDATE/SINKRONISASI
-    // Kosongkan "" jika tidak ada pemberitahuan update yang ingin ditampilkan
     this.setUpdateNotice("", false);
 
     window.deleteTransaction = (id) => this.deleteTransaction(id);
@@ -125,7 +132,6 @@ class App {
     }
   }
 
-  // FUNGSI UNTUK MENAMPILKAN / SEMBUNYI TEKS PEMBERITAHUAN UPDATE
   setUpdateNotice(messageText, isWarning = false) {
     const noticeElem = document.getElementById("update-notice-text");
     if (!noticeElem) return;
@@ -258,21 +264,17 @@ class App {
       if (avatarImg) avatarImg.src = avatarUrl;
       if (avatarContainer) avatarContainer.style.display = "block";
 
-      // Desktop
       if (openLoginBtn) openLoginBtn.style.setProperty("display", "none", "important");
       if (logoutBtn) logoutBtn.style.setProperty("display", "inline-flex", "important");
 
-      // Mobile
       if (mobileOpenLoginBtn) mobileOpenLoginBtn.style.setProperty("display", "none", "important");
       if (mobileLogoutBtn) mobileLogoutBtn.style.setProperty("display", "inline-flex", "important");
     } else {
       if (avatarContainer) avatarContainer.style.display = "none";
 
-      // Desktop
       if (openLoginBtn) openLoginBtn.style.setProperty("display", "inline-flex", "important");
       if (logoutBtn) logoutBtn.style.setProperty("display", "none", "important");
 
-      // Mobile
       if (mobileOpenLoginBtn) mobileOpenLoginBtn.style.setProperty("display", "inline-flex", "important");
       if (mobileLogoutBtn) mobileLogoutBtn.style.setProperty("display", "none", "important");
     }
@@ -371,6 +373,67 @@ class App {
     const btnToggleDesktop = document.getElementById("theme-toggle");
     if (btnToggleDesktop)
       btnToggleDesktop.addEventListener("click", toggleTheme);
+
+    const btnToggleMobile = document.getElementById("mobile-theme-toggle");
+    if (btnToggleMobile)
+      btnToggleMobile.addEventListener("click", toggleTheme);
+  }
+
+  initCalculator() {
+    const calcInput = document.getElementById("calc-income");
+    const calcRule = document.getElementById("calc-rule");
+    const btnUseIncome = document.getElementById("btn-use-latest-income");
+
+    const calculate = () => {
+      const income = parseFloat(calcInput.value) || 0;
+      const rule = calcRule.value;
+
+      let pNeeds = 50, pWants = 30, pSavings = 20;
+
+      if (rule === "60-30-10") {
+        pNeeds = 60;
+        pWants = 30;
+        pSavings = 10;
+      }
+
+      const needsAmt = (income * pNeeds) / 100;
+      const wantsAmt = (income * pWants) / 100;
+      const savingsAmt = (income * pSavings) / 100;
+
+      document.getElementById("pct-needs").innerText = `${pNeeds}%`;
+      document.getElementById("pct-wants").innerText = `${pWants}%`;
+      document.getElementById("pct-savings").innerText = `${pSavings}%`;
+
+      document.getElementById("res-needs").innerText = UI.formatCurrency(needsAmt);
+      document.getElementById("res-wants").innerText = UI.formatCurrency(wantsAmt);
+      document.getElementById("res-savings").innerText = UI.formatCurrency(savingsAmt);
+    };
+
+    if (calcInput) calcInput.addEventListener("input", calculate);
+    if (calcRule) calcRule.addEventListener("change", calculate);
+
+    if (btnUseIncome) {
+      btnUseIncome.addEventListener("click", () => {
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        let totalIncome = 0;
+
+        this.transactions.forEach((t) => {
+          if (t.type === "Income" && t.date && t.date.startsWith(currentMonth)) {
+            totalIncome += parseFloat(t.amount) || 0;
+          }
+        });
+
+        if (totalIncome > 0) {
+          calcInput.value = totalIncome;
+          calculate();
+          UI.showToast(`Mengambil total pemasukan bulan ini: ${UI.formatCurrency(totalIncome)}`, "info");
+        } else {
+          UI.showToast("Belum ada pencatatan Pemasukan pada bulan ini.", "warning");
+        }
+      });
+    }
+
+    calculate();
   }
 
   initEventListeners() {
@@ -410,6 +473,7 @@ class App {
       
       const nowStr = new Date().toISOString().substring(0, 10);
       document.getElementById("tx-date").value = nowStr;
+      
       txModal.classList.add("active");
     };
 
@@ -449,6 +513,14 @@ class App {
     const btnDelAll = document.getElementById("btn-delete-all-tx");
     if (btnDelAll)
       btnDelAll.addEventListener("click", () => this.deleteAllTransactions());
+
+    const btnDelAllBudgets = document.getElementById("btn-delete-all-budgets");
+    if (btnDelAllBudgets)
+      btnDelAllBudgets.addEventListener("click", () => this.deleteAllBudgets());
+
+    const btnDelAllGoals = document.getElementById("btn-delete-all-goals");
+    if (btnDelAllGoals)
+      btnDelAllGoals.addEventListener("click", () => this.deleteAllGoals());
 
     const svgModal = document.getElementById("savings-deposit-modal");
     const openSvgBtn = document.getElementById("open-savings-modal");
@@ -924,6 +996,36 @@ class App {
     }
   }
 
+  async deleteAllBudgets() {
+    if (this.budgets.length === 0) {
+      UI.showToast("Tidak ada anggaran untuk dihapus.", "info");
+      return;
+    }
+
+    if (!confirm("Apakah Anda yakin ingin MENGHAPUS SEMUA ANGGARAN?")) return;
+
+    this.budgets = [];
+    Storage.saveBudgets([]);
+    this.renderAll();
+
+    UI.showToast("Semua anggaran berhasil dihapus.", "success");
+  }
+
+  async deleteAllGoals() {
+    if (this.goals.length === 0) {
+      UI.showToast("Tidak ada target tujuan untuk dihapus.", "info");
+      return;
+    }
+
+    if (!confirm("Apakah Anda yakin ingin MENGHAPUS SEMUA TARGET TUJUAN TABUNGAN?")) return;
+
+    this.goals = [];
+    Storage.saveGoals([]);
+    this.renderAll();
+
+    UI.showToast("Semua target tujuan berhasil dihapus.", "success");
+  }
+
   editBudget(category, amount) {
     document.getElementById("bg-category").value = category;
     document.getElementById("bg-amount").value = amount;
@@ -1194,6 +1296,7 @@ class App {
       options: { responsive: true, maintainAspectRatio: false },
     });
 
+    // CHART STATISTIK PADA TAB STATISTIK
     const ctx3 = document.getElementById("statBarChart").getContext("2d");
     if (this.statBarChart) this.statBarChart.destroy();
 
@@ -1208,6 +1311,25 @@ class App {
       },
       options: { responsive: true, maintainAspectRatio: false },
     });
+
+    // CHART RINGKASAN STATISTIK KHUSUS MOBILE
+    const mobileCanvas = document.getElementById("mobileStatBarChart");
+    if (mobileCanvas) {
+      const ctxMobile = mobileCanvas.getContext("2d");
+      if (this.mobileStatBarChart) this.mobileStatBarChart.destroy();
+
+      this.mobileStatBarChart = new Chart(ctxMobile, {
+        type: "bar",
+        data: {
+          labels: [todayStr],
+          datasets: [
+            { label: "Pemasukan Hari Ini", data: [todayIncome], backgroundColor: "#10b981" },
+            { label: "Pengeluaran Hari Ini", data: [todayExpense], backgroundColor: "#ef4444" },
+          ],
+        },
+        options: { responsive: true, maintainAspectRatio: false },
+      });
+    }
   }
 }
 

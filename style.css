@@ -50,8 +50,10 @@ body {
 }
 
 .mobile-brand-header { display: none; }
+.mobile-scroll-hint { display: none; }
+.mobile-theme-card { display: none; }
+.mobile-stats-preview-card { display: none; } /* Default disembunyikan di layar desktop/tablet */
 
-/* UKURAN TEKS NOTIFIKASI SINKRONISASI/UPDATE DISAMAKAN DENAN JAM GREETINGS (14px Desktop, 11px Mobile) */
 .update-notice-paragraph {
     font-size: 14px;
     font-weight: 500;
@@ -69,7 +71,22 @@ body {
 .greeting-title-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+}
+
+.user-avatar-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--primary);
+    flex-shrink: 0;
+}
+
+.user-avatar-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .modal-overlay {
@@ -225,6 +242,8 @@ body {
     font-size: 13px;
 }
 
+.w-100 { width: 100%; }
+
 [data-theme="light"] .sun-icon { display: none; }
 [data-theme="dark"] .moon-icon { display: none; }
 
@@ -271,24 +290,13 @@ body {
     gap: 8px;
 }
 
-.user-avatar-badge {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 2px solid var(--primary);
-    flex-shrink: 0;
-}
-
-.user-avatar-badge img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
 .btn-logout-danger {
     color: var(--expense) !important;
     border-color: var(--expense) !important;
+}
+
+.budget-info {
+    font-size: 13px;
 }
 
 /* Cards & Grid Desktop */
@@ -350,8 +358,9 @@ body {
 .mt-3 { margin-top: 16px; }
 .mb-4 { margin-bottom: 24px; }
 .max-w-600 { max-width: 600px; }
+.max-w-700 { max-width: 700px; }
 
-/* Rekap Keuangan Bulanan Card */
+/* REKAP KEUANGAN BULANAN CARD */
 .rekap-list-container {
     display: flex;
     flex-direction: column;
@@ -385,6 +394,84 @@ body {
 .rekap-value.income-val { color: var(--income); }
 .rekap-value.expense-val { color: var(--expense); }
 .rekap-value.savings-val { color: var(--primary); }
+
+/* KALKULATOR 50-30-20 STYLES */
+.calc-input-wrapper {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.flex-3 { flex: 3; min-width: 220px; }
+.flex-2 { flex: 2; min-width: 180px; }
+
+.calc-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.calc-res-card {
+    border-left: 5px solid var(--primary);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.calc-res-card.needs { border-left-color: #ef4444; }
+.calc-res-card.wants { border-left-color: #f59e0b; }
+.calc-res-card.savings { border-left-color: #10b981; }
+
+.calc-res-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.calc-res-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-main);
+}
+
+.needs .calc-res-icon { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+.wants .calc-res-icon { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+.savings .calc-res-icon { color: #10b981; background: rgba(16, 185, 129, 0.1); }
+
+.calc-res-header h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.calc-badge-percent {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    display: inline-block;
+}
+
+.needs .calc-badge-percent { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.wants .calc-badge-percent { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.savings .calc-badge-percent { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+
+.calc-amount {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.calc-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
 
 .remaining-badge {
     font-size: 11px;
@@ -472,7 +559,7 @@ body {
 .filter-controls { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .pagination-container {
-    display: flex;
+    display: grid;
     justify-content: center;
     align-items: center;
     padding-top: 12px;
@@ -481,7 +568,7 @@ body {
     gap: 12px;
 }
 
-.pagination-info { font-size: 13px; color: var(--text-muted); }
+.pagination-info { font-size: 13px; color: var(--text-muted); text-align: center; }
 .pagination-buttons { display: flex; align-items: center; gap: 8px; }
 .pagination-page-num { font-size: 13px; font-weight: 600; padding: 0 8px; }
 
@@ -497,6 +584,11 @@ body {
     border-radius: var(--radius-md);
     outline: none;
     font-size: 14px;
+}
+
+.form-control-lg {
+    padding: 12px 14px;
+    font-size: 15px;
 }
 
 .select-md { width: auto; padding: 8px 12px; }
@@ -615,18 +707,9 @@ body {
         margin-left: 0 !important;
         width: 100% !important;
         padding: 16px;
-        padding-bottom: 90px;
+        padding-bottom: 100px !important;
     }
 
-    /* Memberikan ruang bawah pada konten utama agar tidak tertutup bottom navbar */
-    .main-content {
-        margin-left: 0 !important;
-        width: 100% !important;
-        padding: 16px;
-        padding-bottom: 100px !important; /* Ditambah agar leluasa saat discroll sampai paling bawah */
-    }
-
-    /* Kelas khusus untuk elemen/card paling bawah di setiap view */
     .mb-mobile-nav {
         margin-bottom: 90px !important;
     }
@@ -683,11 +766,19 @@ body {
 @media (max-width: 470px) {
     .main-content {
         padding: 12px;
-        padding-bottom: 110px !important; /* Ruang ekstra untuk layar mobile kecil */
+        padding-bottom: 110px !important;
     }
 
-    .mb-mobile-nav {
-        margin-bottom: 95px !important;
+    .budget-info {
+        font-size: 11px;
+    }
+
+    .card-header{
+        justify-content: center;
+    }
+
+    .btn-hapus-all {
+        padding: 6px 16px !important;
     }
 
     .mobile-brand-header {
@@ -746,16 +837,19 @@ body {
         justify-content: center !important;
     }
 
+    .chart-card {
+        padding: 20px 0px;
+    }
+
     #btn-logout-google {
-    padding: 8px 16px; /* <--- (Opsional) Custom padding tombol Logout Desktop */
-    font-size: 11px;   /* <--- (Opsional) Custom ukuran teks tombol Logout Desktop */
+        padding: 8px 16px;
+        font-size: 11px;
     }
 
     .mb-mobile-nav {
-        margin-bottom: 85px !important;
+        margin-bottom: 95px !important;
     }
 
-    /* MENGHILANGKAN CONTAINER AKSI DESKTOP DENGAN TEGAS PADA LAYAR MOBILE */
     .desktop-only-actions {
         display: none !important;
     }
@@ -769,11 +863,35 @@ body {
         font-size: 18px !important;
     }
 
-    /* Ukuran Jam/Tanggal & Notifikasi disamakan persis di Mobile (11px) */
     .user-greeting p, .update-notice-paragraph {
         font-size: 11px !important;
     }
 
     .summary-cards { grid-template-columns: 1fr; }
     .filter-controls { grid-template-columns: 1fr; }
+
+    .mobile-scroll-hint {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--primary);
+        font-weight: 500;
+        margin-top: 14px;
+        margin-bottom: -6px;
+    }
+
+    .mobile-theme-card {
+        display: block !important;
+        margin-bottom: 16px;
+    }
+
+    .calc-input-wrapper { flex-direction: column; gap: 0; }
+    .calc-results-grid { grid-template-columns: 1fr; }
+
+    /* MENAMPILKAN CARD PREVIEW STATISTIK KHUSUS LAYAR <= 470px */
+    .mobile-stats-preview-card {
+        display: block !important;
+    }
 }
