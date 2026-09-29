@@ -10,7 +10,7 @@ const Storage = {
         USER_AVATAR: 'finora_user_avatar'
     },
 
-    DEFAULT_API_URL: 'https://script.google.com/macros/s/AKfycbw__WmBLlj9-55VrL5Ue1xVYs6N-WI0-pKicSxm6pVdpBQzEdXYQDM8Fj2LUl5BCx1f6Q/exec',
+    DEFAULT_API_URL: '',
 
     getApiUrl() {
         return localStorage.getItem(this.KEYS.API_URL) || '';
