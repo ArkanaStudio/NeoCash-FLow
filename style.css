@@ -121,6 +121,10 @@ body {
     flex-shrink: 0;
 }
 
+.btn-pig {
+    margin-left: 5px;
+}
+
 .btn-icon-add:hover {
     background: var(--primary-hover);
     transform: scale(1.1);
@@ -469,7 +473,7 @@ body {
 
 .pagination-container {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     padding-top: 12px;
     border-top: 1px solid var(--border-color);
@@ -545,7 +549,8 @@ body {
     gap: 8px; font-size: 14px;
 }
 
-.btn-sm { padding: 6px 12px; font-size: 12px; }
+.msk-ggl {padding: 14px 18px; font-size: 12px;}
+.btn-sm { padding: 10px 14px; font-size: 12px; }
 .btn-primary { background: var(--primary); color: white; }
 .btn-outline { border: 1px solid var(--border-color); background: transparent; color: var(--text-main); }
 .btn-text { background: transparent; border: none; color: var(--primary); padding: 0; }
@@ -741,6 +746,11 @@ body {
         justify-content: center !important;
     }
 
+    #btn-logout-google {
+    padding: 8px 16px; /* <--- (Opsional) Custom padding tombol Logout Desktop */
+    font-size: 11px;   /* <--- (Opsional) Custom ukuran teks tombol Logout Desktop */
+    }
+
     .mb-mobile-nav {
         margin-bottom: 85px !important;
     }
@@ -751,6 +761,7 @@ body {
     }
 
     .top-header {
+        padding-left: 14px !important;
         margin-bottom: 16px !important;
     }
 
